@@ -1,1 +1,5 @@
-testdiagnostique_iaai
+##testdiagnostique_iaai
+
+npm install
+
+npm run dev
