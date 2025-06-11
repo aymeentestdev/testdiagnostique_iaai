@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
               <span className="font-heading text-xl font-bold">IAAI</span>
             </div>
             <p className="text-gray-300 mb-4">
-              Preparing students for academic excellence through comprehensive diagnostic assessments.
+              Préparation des étudiants à l'excellence académique grâce à des évaluations diagnostiques complètes.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
@@ -34,11 +34,11 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="font-heading text-lg font-semibold mb-4">Contact Us</h3>
+            <h3 className="font-heading text-lg font-semibold mb-4">Contactez-Nous</h3>
             <ul className="space-y-3">
               <li className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-secondary-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-300">123 Education Ave, Casablanca, Morocco</span>
+                <span className="text-gray-300">123 Avenue de l'Éducation, Casablanca, Maroc</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-secondary-400 flex-shrink-0" />
@@ -52,19 +52,19 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="font-heading text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="font-heading text-lg font-semibold mb-4">Liens Rapides</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Our Programs</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">À Propos</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Nos Programmes</a></li>
               <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Admissions</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Student Resources</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Ressources Étudiants</a></li>
               <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
         </div>
         
         <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-sm">
-          <p>&copy; {new Date().getFullYear()} IAAI Institute. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Institut IAAI. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

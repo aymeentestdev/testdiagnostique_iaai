@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ minimal = false }) => {
         {!minimal && (
           <nav className="hidden md:flex space-x-6">
             <Link to="/" className={`font-medium hover:text-secondary-300 transition-colors ${location.pathname === '/' ? 'text-secondary-400' : ''}`}>
-              Home
+              Accueil
             </Link>
             {userName && (
               <Link to="/test" className={`font-medium hover:text-secondary-300 transition-colors ${location.pathname === '/test' ? 'text-secondary-400' : ''}`}>
@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ minimal = false }) => {
             )}
             {userName && (
               <Link to="/results" className={`font-medium hover:text-secondary-300 transition-colors ${location.pathname === '/results' ? 'text-secondary-400' : ''}`}>
-                Results
+                Résultats
               </Link>
             )}
           </nav>

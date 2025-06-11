@@ -116,50 +116,56 @@ export const TestProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     });
     
-    // Generate personalized recommendations
+    // Generate personalized recommendations in French
     const recommendations: string[] = [];
     
     // Overall recommendations
     const overallPercentage = (totalCorrect / totalQuestions) * 100;
     
     if (overallPercentage < 40) {
-      recommendations.push("Your overall performance indicates a need for significant improvement. Consider developing a comprehensive study plan focusing on all subjects.");
+      recommendations.push("Votre performance globale indique un besoin d'amélioration significative. Considérez développer un plan d'étude complet en vous concentrant sur toutes les matières.");
     } else if (overallPercentage < 70) {
-      recommendations.push("You have a moderate understanding of the concepts. Focus on strengthening your knowledge in specific areas where you scored less.");
+      recommendations.push("Vous avez une compréhension modérée des concepts. Concentrez-vous sur le renforcement de vos connaissances dans les domaines spécifiques où vous avez moins bien réussi.");
     } else {
-      recommendations.push("Great job! You have a strong foundation. Continue refining your understanding in the few areas where you faced challenges.");
+      recommendations.push("Excellent travail ! Vous avez une base solide. Continuez à affiner votre compréhension dans les quelques domaines où vous avez rencontré des difficultés.");
     }
     
     // Subject-specific recommendations
     subjects.forEach(subject => {
       const result = subjectResults[subject];
+      const subjectName = {
+        math: 'mathématiques',
+        physics: 'physique',
+        chemistry: 'chimie',
+        biology: 'biologie'
+      }[subject];
       
       if (result.percentage < 50) {
         if (result.weakTopics.length > 0) {
-          recommendations.push(`In ${subject}, focus particularly on: ${result.weakTopics.join(', ')}.`);
+          recommendations.push(`En ${subjectName}, concentrez-vous particulièrement sur : ${result.weakTopics.join(', ')}.`);
         } else {
-          recommendations.push(`Your ${subject} performance needs improvement. Consider reviewing core concepts.`);
+          recommendations.push(`Votre performance en ${subjectName} nécessite une amélioration. Considérez réviser les concepts fondamentaux.`);
         }
       } else if (result.weakTopics.length > 0) {
-        recommendations.push(`While you're doing well in ${subject}, you could improve on: ${result.weakTopics.join(', ')}.`);
+        recommendations.push(`Bien que vous réussissiez bien en ${subjectName}, vous pourriez vous améliorer sur : ${result.weakTopics.join(', ')}.`);
       }
     });
     
-    // Learning strategy recommendations
+    // Learning strategy recommendations in French
     if (subjectResults.math.percentage < 60) {
-      recommendations.push("For mathematics, practice is key. Work through example problems and solutions regularly.");
+      recommendations.push("Pour les mathématiques, la pratique est essentielle. Travaillez régulièrement sur des problèmes d'exemple et leurs solutions.");
     }
     
     if (subjectResults.physics.percentage < 60) {
-      recommendations.push("For physics, focus on understanding the underlying principles rather than memorizing formulas.");
+      recommendations.push("Pour la physique, concentrez-vous sur la compréhension des principes sous-jacents plutôt que sur la mémorisation des formules.");
     }
     
     if (subjectResults.chemistry.percentage < 60) {
-      recommendations.push("For chemistry, create flashcards for formulas and reactions, and practice balancing equations.");
+      recommendations.push("Pour la chimie, créez des fiches pour les formules et réactions, et pratiquez l'équilibrage des équations.");
     }
     
     if (subjectResults.biology.percentage < 60) {
-      recommendations.push("For biology, use visual aids and diagrams to better understand processes and structures.");
+      recommendations.push("Pour la biologie, utilisez des aides visuelles et des diagrammes pour mieux comprendre les processus et structures.");
     }
     
     return {
