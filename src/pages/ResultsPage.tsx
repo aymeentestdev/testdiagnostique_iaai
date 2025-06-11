@@ -31,147 +31,6 @@ const ResultsPage: React.FC = () => {
     }
   }, [userName, userAnswers, navigate]);
   
-  // Generate study plans based on performance
-  const generateStudyPlans = () => {
-    const plans: Record<SubjectType, { hours10: string[], hours20: string[], hours30: string[], hours50: string[] }> = {
-      math: { hours10: [], hours20: [], hours30: [], hours50: [] },
-      physics: { hours10: [], hours20: [], hours30: [], hours50: [] },
-      chemistry: { hours10: [], hours20: [], hours30: [], hours50: [] },
-      biology: { hours10: [], hours20: [], hours30: [], hours50: [] },
-    };
-
-    Object.entries(results.subjects).forEach(([subject, data]) => {
-      const subjectType = subject as SubjectType;
-      const percentage = data.percentage;
-      
-      if (percentage < 30) {
-        // Very weak - intensive preparation needed
-        plans[subjectType] = {
-          hours10: [
-            'Révision des concepts de base',
-            'Exercices fondamentaux',
-            'Fiches de formules essentielles'
-          ],
-          hours20: [
-            'Approfondissement des bases',
-            'Exercices d\'application',
-            'Première série d\'annales',
-            'Correction détaillée des erreurs'
-          ],
-          hours30: [
-            'Consolidation des acquis',
-            'Exercices de niveau intermédiaire',
-            'Deuxième série d\'annales',
-            'Travail sur les points faibles identifiés',
-            'Révision générale'
-          ],
-          hours50: [
-            'Maîtrise complète des bases',
-            'Exercices avancés',
-            'Trois séries d\'annales complètes',
-            'Approfondissement des sujets difficiles',
-            'Simulations d\'examens',
-            'Révision intensive finale'
-          ]
-        };
-      } else if (percentage < 50) {
-        // Weak - significant improvement needed
-        plans[subjectType] = {
-          hours10: [
-            'Révision ciblée des lacunes',
-            'Exercices de renforcement',
-            'Mémorisation des formules clés'
-          ],
-          hours20: [
-            'Consolidation des bases',
-            'Exercices d\'application variés',
-            'Première série d\'annales',
-            'Analyse des erreurs récurrentes'
-          ],
-          hours30: [
-            'Approfondissement méthodique',
-            'Exercices de niveau moyen à difficile',
-            'Deux séries d\'annales',
-            'Travail spécifique sur les faiblesses',
-            'Révision structurée'
-          ],
-          hours50: [
-            'Perfectionnement des connaissances',
-            'Exercices complexes et variés',
-            'Trois séries d\'annales complètes',
-            'Maîtrise des sujets avancés',
-            'Entraînement intensif',
-            'Préparation finale optimisée'
-          ]
-        };
-      } else if (percentage < 70) {
-        // Average - moderate improvement needed
-        plans[subjectType] = {
-          hours10: [
-            'Révision des points faibles',
-            'Exercices ciblés',
-            'Perfectionnement des méthodes'
-          ],
-          hours20: [
-            'Approfondissement sélectif',
-            'Exercices de niveau élevé',
-            'Annales récentes',
-            'Optimisation des stratégies'
-          ],
-          hours30: [
-            'Perfectionnement avancé',
-            'Exercices complexes',
-            'Deux séries d\'annales complètes',
-            'Maîtrise des subtilités',
-            'Entraînement chronométré'
-          ],
-          hours50: [
-            'Excellence dans tous les domaines',
-            'Exercices de très haut niveau',
-            'Trois séries d\'annales + sujets bonus',
-            'Perfectionnement des techniques',
-            'Préparation de compétition',
-            'Révision d\'excellence'
-          ]
-        };
-      } else {
-        // Good - fine-tuning needed
-        plans[subjectType] = {
-          hours10: [
-            'Perfectionnement des détails',
-            'Exercices de haut niveau',
-            'Révision rapide des formules'
-          ],
-          hours20: [
-            'Optimisation des performances',
-            'Exercices complexes',
-            'Annales difficiles',
-            'Perfectionnement de la rapidité'
-          ],
-          hours30: [
-            'Excellence et précision',
-            'Défis mathématiques avancés',
-            'Annales de concours prestigieux',
-            'Techniques d\'optimisation',
-            'Préparation de l\'excellence'
-          ],
-          hours50: [
-            'Maîtrise absolue',
-            'Problèmes de recherche',
-            'Concours internationaux',
-            'Innovation méthodologique',
-            'Préparation aux grandes écoles',
-            'Perfectionnement ultime'
-          ]
-        };
-      }
-    });
-
-    return plans;
-  };
-
-  const studyPlans = generateStudyPlans();
-  
   // Chart data for overall performance
   const overallChartData = {
     labels: ['Correct', 'Incorrect'],
@@ -238,180 +97,266 @@ const ResultsPage: React.FC = () => {
     maintainAspectRatio: false,
   };
   
-  // Generate and download PDF
+  // Generate and download PDF with academic design
   const handleDownloadPDF = async () => {
     setIsLoading(true);
     
     try {
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
       
-      // Add IAAI logo/header
-      doc.setFillColor(30, 58, 138); // primary-900
-      doc.rect(0, 0, 210, 30, 'F');
+      // Colors for academic design
+      const primaryBlue = [30, 58, 138];
+      const lightBlue = [219, 234, 254];
+      const darkGray = [55, 65, 81];
+      const lightGray = [243, 244, 246];
+      
+      // Header with academic design
+      doc.setFillColor(...primaryBlue);
+      doc.rect(0, 0, pageWidth, 35, 'F');
+      
+      // IAAI Logo area
+      doc.setFillColor(255, 255, 255);
+      doc.rect(15, 8, 25, 19, 'F');
+      doc.setTextColor(...primaryBlue);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('IAAI', 27.5, 20, { align: 'center' });
+      
+      // Title
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.text('IAAI - Résultats du Test Diagnostique', 105, 15, { align: 'center' });
-      
-      // Add student info
-      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(18);
+      doc.text('RAPPORT DE DIAGNOSTIC ACADÉMIQUE', pageWidth/2, 18, { align: 'center' });
       doc.setFontSize(12);
-      doc.text(`Étudiant : ${userName}`, 14, 40);
-      doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 48);
+      doc.text('Test d\'Évaluation des Compétences Post-Baccalauréat', pageWidth/2, 26, { align: 'center' });
       
-      // Add overall performance
+      // Student information section
+      doc.setFillColor(...lightBlue);
+      doc.rect(15, 45, pageWidth - 30, 25, 'F');
+      doc.setDrawColor(...primaryBlue);
+      doc.rect(15, 45, pageWidth - 30, 25, 'S');
+      
+      doc.setTextColor(...darkGray);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('Performance Globale', 14, 65);
+      doc.setFontSize(12);
+      doc.text('INFORMATIONS DE L\'ÉTUDIANT', 20, 55);
+      
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Nom de l'étudiant : ${userName}`, 20, 62);
+      doc.text(`Date d'évaluation : ${new Date().toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}`, 20, 67);
+      
+      // Overall performance section
+      let currentY = 85;
+      doc.setFillColor(...primaryBlue);
+      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
-      doc.text(`Total des Questions : ${results.overall.total}`, 14, 75);
-      doc.text(`Réponses Correctes : ${results.overall.correct}`, 14, 83);
-      doc.text(`Score Global : ${results.overall.percentage.toFixed(1)}%`, 14, 91);
+      doc.text('PERFORMANCE GLOBALE', 20, currentY + 5);
       
-      // Add performance rating
-      let performanceRating = '';
+      currentY += 15;
+      doc.setTextColor(...darkGray);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
       
-      if (results.overall.percentage >= 80) {
-        performanceRating = 'Excellent';
-      } else if (results.overall.percentage >= 65) {
-        performanceRating = 'Bien';
-      } else if (results.overall.percentage >= 50) {
-        performanceRating = 'Moyen';
-      } else {
-        performanceRating = 'À Améliorer';
-      }
+      // Performance metrics in a structured layout
+      const performanceData = [
+        ['Total des Questions', results.overall.total.toString()],
+        ['Réponses Correctes', results.overall.correct.toString()],
+        ['Score Global', `${results.overall.percentage.toFixed(1)}%`],
+        ['Niveau de Performance', results.overall.percentage >= 80 ? 'Excellent' : 
+                                 results.overall.percentage >= 65 ? 'Bien' : 
+                                 results.overall.percentage >= 50 ? 'Moyen' : 'À Améliorer']
+      ];
       
-      doc.setTextColor(0, 0, 0);
-      doc.text('Niveau de Performance :', 14, 99);
+      (doc as any).autoTable({
+        startY: currentY,
+        body: performanceData,
+        theme: 'plain',
+        styles: {
+          fontSize: 10,
+          cellPadding: 3,
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 60 },
+          1: { cellWidth: 40, halign: 'center' },
+        },
+        margin: { left: 20, right: 20 },
+      });
+      
+      // Subject performance table
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+      
+      doc.setFillColor(...primaryBlue);
+      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text(performanceRating, 75, 99);
+      doc.setFontSize(12);
+      doc.text('ANALYSE DÉTAILLÉE PAR MATIÈRE', 20, currentY + 5);
       
-      // Add subject performance table
-      doc.setTextColor(0, 0, 0);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('Performance par Matière', 14, 115);
+      currentY += 15;
       
-      // Create table for subject performance
       const subjectTableData = Object.entries(results.subjects).map(([subject, data]) => [
         subjectInfo[subject as SubjectType].title,
         `${data.correct}/${data.total}`,
         `${data.percentage.toFixed(1)}%`,
-        data.weakTopics.length > 0 ? data.weakTopics.join(', ') : 'Aucune',
+        `${data.recommendedHours}h`,
+        data.weakTopics.length > 0 ? data.weakTopics.slice(0, 2).join(', ') + (data.weakTopics.length > 2 ? '...' : '') : 'Aucune'
       ]);
       
       (doc as any).autoTable({
-        startY: 120,
-        head: [['Matière', 'Score', 'Pourcentage', 'Domaines à Améliorer']],
+        startY: currentY,
+        head: [['Matière', 'Score', 'Pourcentage', 'Préparation', 'Domaines à Améliorer']],
         body: subjectTableData,
-        theme: 'grid',
+        theme: 'striped',
         headStyles: {
-          fillColor: [30, 58, 138],
+          fillColor: primaryBlue,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-        },
-        styles: {
           fontSize: 10,
         },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          3: { cellWidth: 80 },
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
         },
+        columnStyles: {
+          0: { cellWidth: 35, fontStyle: 'bold' },
+          1: { cellWidth: 20, halign: 'center' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+          4: { cellWidth: 80 },
+        },
+        margin: { left: 20, right: 20 },
       });
       
-      // Add study plans
-      let currentY = (doc as any).lastAutoTable.finalY + 15;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('Plans d\'Étude Personnalisés', 14, currentY);
+      // Study plans section
+      currentY = (doc as any).lastAutoTable.finalY + 20;
       
-      Object.entries(studyPlans).forEach(([subject, plans]) => {
-        if (currentY > 250) {
-          doc.addPage();
-          currentY = 20;
-        }
-        
-        currentY += 10;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(subjectInfo[subject as SubjectType].title, 14, currentY);
-        
-        // Add plans for different hour commitments
-        const planTypes = [
-          { key: 'hours10', title: '10h de préparation' },
-          { key: 'hours20', title: '20h de préparation' },
-          { key: 'hours30', title: '30h de préparation' },
-          { key: 'hours50', title: '50h de préparation' }
-        ];
-        
-        planTypes.forEach(planType => {
-          if (currentY > 260) {
-            doc.addPage();
-            currentY = 20;
-          }
-          
-          currentY += 8;
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.text(`• ${planType.title} :`, 20, currentY);
-          
-          const planItems = plans[planType.key as keyof typeof plans];
-          planItems.forEach((item, index) => {
-            currentY += 5;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            const wrappedText = doc.splitTextToSize(`  - ${item}`, 170);
-            doc.text(wrappedText, 25, currentY);
-            currentY += (wrappedText.length - 1) * 4;
-          });
-        });
-        
-        currentY += 5;
-      });
-      
-      // Add recommendations
-      if (currentY > 220) {
+      if (currentY > pageHeight - 50) {
         doc.addPage();
         currentY = 20;
       }
       
-      currentY += 15;
+      doc.setFillColor(...primaryBlue);
+      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('Recommandations Personnalisées', 14, currentY);
+      doc.setFontSize(12);
+      doc.text('PLANS DE PRÉPARATION PERSONNALISÉS', 20, currentY + 5);
       
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
+      currentY += 20;
       
-      currentY += 10;
-      results.recommendations.forEach((recommendation, index) => {
-        if (currentY > 270) {
+      Object.entries(results.subjects).forEach(([subject, data]) => {
+        if (currentY > pageHeight - 60) {
           doc.addPage();
           currentY = 20;
         }
         
-        const textLines = doc.splitTextToSize(`• ${recommendation}`, 180);
-        doc.text(textLines, 14, currentY);
-        currentY += 7 * textLines.length;
+        // Subject header
+        doc.setFillColor(...lightGray);
+        doc.rect(15, currentY, pageWidth - 30, 12, 'F');
+        doc.setDrawColor(...primaryBlue);
+        doc.rect(15, currentY, pageWidth - 30, 12, 'S');
+        
+        doc.setTextColor(...primaryBlue);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(`${subjectInfo[subject as SubjectType].title} - Plan de ${data.recommendedHours} heures`, 20, currentY + 7);
+        
+        currentY += 18;
+        
+        // Study plan items
+        doc.setTextColor(...darkGray);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        
+        data.studyPlan.forEach((item, index) => {
+          if (currentY > pageHeight - 20) {
+            doc.addPage();
+            currentY = 20;
+          }
+          
+          const wrappedText = doc.splitTextToSize(`${index + 1}. ${item}`, pageWidth - 50);
+          doc.text(wrappedText, 25, currentY);
+          currentY += wrappedText.length * 4 + 2;
+        });
+        
+        currentY += 8;
       });
       
-      // Add footer
+      // Recommendations section
+      if (currentY > pageHeight - 80) {
+        doc.addPage();
+        currentY = 20;
+      }
+      
+      doc.setFillColor(...primaryBlue);
+      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('RECOMMANDATIONS PÉDAGOGIQUES', 20, currentY + 5);
+      
+      currentY += 20;
+      
+      doc.setTextColor(...darkGray);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      
+      results.recommendations.forEach((recommendation, index) => {
+        if (currentY > pageHeight - 30) {
+          doc.addPage();
+          currentY = 20;
+        }
+        
+        const wrappedText = doc.splitTextToSize(`• ${recommendation}`, pageWidth - 40);
+        doc.text(wrappedText, 20, currentY);
+        currentY += wrappedText.length * 5 + 3;
+      });
+      
+      // Footer on all pages
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
+        
+        // Footer line
+        doc.setDrawColor(...primaryBlue);
+        doc.line(15, pageHeight - 20, pageWidth - 15, pageHeight - 20);
+        
+        // Footer text
+        doc.setFontSize(8);
+        doc.setTextColor(...darkGray);
         doc.text(
-          `Institut IAAI - Page ${i} sur ${pageCount}`,
-          105,
-          285,
+          'Institut IAAI - Centre d\'Excellence Académique',
+          20,
+          pageHeight - 12
+        );
+        doc.text(
+          `Page ${i} sur ${pageCount}`,
+          pageWidth - 20,
+          pageHeight - 12,
+          { align: 'right' }
+        );
+        
+        // Date in footer
+        doc.text(
+          `Généré le ${new Date().toLocaleDateString('fr-FR')}`,
+          pageWidth/2,
+          pageHeight - 12,
           { align: 'center' }
         );
       }
       
       // Save the PDF
-      doc.save(`IAAI_ResultatsDiagnostic_${userName.replace(/\s/g, '_')}.pdf`);
+      doc.save(`IAAI_Diagnostic_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
       setShowDownloadMessage(true);
       
       // Hide the message after 3 seconds
@@ -447,6 +392,17 @@ const ResultsPage: React.FC = () => {
     if (percentage >= 65) return { label: 'Bien', color: 'text-blue-500' };
     if (percentage >= 50) return { label: 'Moyen', color: 'text-amber-500' };
     return { label: 'À Améliorer', color: 'text-red-500' };
+  };
+
+  // Get color for recommended hours
+  const getHoursColor = (hours: number) => {
+    switch (hours) {
+      case 10: return 'bg-green-100 text-green-800 border-green-200';
+      case 20: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 30: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 50: return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
   
   return (
@@ -489,7 +445,7 @@ const ResultsPage: React.FC = () => {
             ) : (
               <>
                 <Download className="w-5 h-5" />
-                <span>Télécharger les Résultats</span>
+                <span>Télécharger le Rapport</span>
               </>
             )}
           </button>
@@ -627,6 +583,13 @@ const ResultsPage: React.FC = () => {
                       <p className="text-sm text-gray-500">Niveau</p>
                       <p className={`font-semibold ${color}`}>{label}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Préparation</p>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getHoursColor(data.recommendedHours)}`}>
+                        <Clock className="w-4 h-4 mr-1" />
+                        {data.recommendedHours}h
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
@@ -655,44 +618,39 @@ const ResultsPage: React.FC = () => {
       >
         <h2 className="font-heading text-xl md:text-2xl font-semibold mb-6 flex items-center">
           <Target className="w-6 h-6 mr-2 text-primary-600" />
-          Plans d'Étude Personnalisés
+          Plans de Préparation Personnalisés
         </h2>
         
         <div className="space-y-8">
-          {Object.entries(studyPlans).map(([subject, plans]) => {
+          {Object.entries(results.subjects).map(([subject, data]) => {
             const subjectType = subject as SubjectType;
             
             return (
               <div key={subject} className={`border-l-4 border-${subjectType} p-6 bg-gray-50 rounded-r-lg`}>
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className={`w-10 h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
-                    {getSubjectIcon(subject)}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
+                      {getSubjectIcon(subject)}
+                    </div>
+                    <h3 className="font-heading text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
                   </div>
-                  <h3 className="font-heading text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
+                  
+                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getHoursColor(data.recommendedHours)}`}>
+                    <Clock className="w-4 h-4 mr-2" />
+                    Plan de {data.recommendedHours} heures
+                  </span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { key: 'hours10', title: '10h', icon: Clock, color: 'bg-blue-100 text-blue-800' },
-                    { key: 'hours20', title: '20h', icon: Clock, color: 'bg-green-100 text-green-800' },
-                    { key: 'hours30', title: '30h', icon: Clock, color: 'bg-yellow-100 text-yellow-800' },
-                    { key: 'hours50', title: '50h', icon: TrendingUp, color: 'bg-purple-100 text-purple-800' }
-                  ].map(({ key, title, icon: Icon, color }) => (
-                    <div key={key} className="bg-white p-4 rounded-lg shadow-sm">
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-3 ${color}`}>
-                        <Icon className="w-4 h-4 mr-1" />
-                        {title} de préparation
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        {plans[key as keyof typeof plans].map((item, index) => (
-                          <li key={index} className="flex items-start">
-                            <ChevronRight className="w-4 h-4 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-700">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h4 className="font-medium text-gray-800 mb-3">Programme de préparation recommandé :</h4>
+                  <ul className="space-y-2">
+                    {data.studyPlan.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <ChevronRight className="w-4 h-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             );
@@ -735,9 +693,9 @@ const ResultsPage: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h3 className="font-medium text-secondary-300 mb-2">Réviser les Domaines Faibles</h3>
+            <h3 className="font-medium text-secondary-300 mb-2">Suivre Votre Plan Personnalisé</h3>
             <p className="text-sm text-gray-200">
-              Concentrez votre temps d'étude sur les sujets où vous avez obtenu les scores les plus bas pour maximiser l'amélioration.
+              Respectez les heures de préparation recommandées pour chaque matière selon votre niveau actuel.
             </p>
           </div>
           
@@ -751,14 +709,14 @@ const ResultsPage: React.FC = () => {
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
             <h3 className="font-medium text-secondary-300 mb-2">Chercher de l'Aide Supplémentaire</h3>
             <p className="text-sm text-gray-200">
-              Considérez le tutorat ou des ressources supplémentaires pour les matières nécessitant une amélioration significative.
+              Considérez le tutorat ou des ressources supplémentaires pour les matières nécessitant plus de 30 heures de préparation.
             </p>
           </div>
           
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
             <h3 className="font-medium text-secondary-300 mb-2">Reprendre le Test Plus Tard</h3>
             <p className="text-sm text-gray-200">
-              Après avoir étudié, revenez et reprenez le test pour mesurer vos progrès.
+              Après avoir suivi votre plan d'étude, revenez et reprenez le test pour mesurer vos progrès.
             </p>
           </div>
         </div>
