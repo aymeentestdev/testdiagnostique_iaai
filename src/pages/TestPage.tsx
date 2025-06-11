@@ -5,6 +5,7 @@ import { Calculator, Atom, FlaskRound as Flask, Microscope, CheckCircle, Chevron
 import { useTest } from '../context/TestContext';
 import { SubjectType, QuestionType } from '../types';
 import { getSubjectInfo } from '../data/questions';
+import QuestionRenderer from '../components/QuestionRenderer';
 
 const TestPage: React.FC = () => {
   const { 
@@ -34,8 +35,8 @@ const TestPage: React.FC = () => {
   useEffect(() => {
     if (!currentSubject) {
       setCurrentSubject('math');
-      // 5 minutes per subject (300 seconds)
-      setTimeLeft(300);
+      // 8 minutes per subject (480 seconds) - increased due to difficulty
+      setTimeLeft(480);
     }
   }, [currentSubject, setCurrentSubject]);
   
@@ -87,7 +88,7 @@ const TestPage: React.FC = () => {
       const nextSubject = subjects[currentIndex + 1];
       setCurrentSubject(nextSubject);
       setCurrentQuestionIndex(0);
-      setTimeLeft(300); // Reset timer for new subject
+      setTimeLeft(480); // Reset timer for new subject (8 minutes)
     } else {
       // All subjects completed
       setIsTestComplete(true);
@@ -179,13 +180,13 @@ const TestPage: React.FC = () => {
         >
           <div className="text-center mb-8">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="font-heading text-3xl font-bold text-gray-900 mb-2">Test Completed!</h2>
+            <h2 className="font-heading text-3xl font-bold text-gray-900 mb-2">Test Terminé !</h2>
             <p className="text-lg text-gray-600 mb-6">
-              You've completed the diagnostic test across all subjects.
+              Vous avez terminé le test diagnostique dans toutes les matières.
             </p>
             
             <div className="bg-gray-50 p-6 rounded-lg mb-8">
-              <h3 className="font-heading text-xl font-semibold mb-4">Test Summary</h3>
+              <h3 className="font-heading text-xl font-semibold mb-4">Résumé du Test</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {['math', 'physics', 'chemistry', 'biology'].map((subject) => {
                   const subjectQuestions = getSubjectQuestions(subject as SubjectType);
@@ -202,7 +203,7 @@ const TestPage: React.FC = () => {
                         </div>
                       </div>
                       <p className="font-semibold">{subjectInfo[subject as SubjectType].title}</p>
-                      <p className="text-sm text-gray-500">{answeredCount}/{subjectQuestions.length} answered</p>
+                      <p className="text-sm text-gray-500">{answeredCount}/{subjectQuestions.length} répondues</p>
                     </div>
                   );
                 })}
@@ -213,7 +214,7 @@ const TestPage: React.FC = () => {
               onClick={handleSubmitTest}
               className="bg-primary-700 hover:bg-primary-800 text-white font-medium px-8 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
             >
-              View My Results
+              Voir Mes Résultats
             </button>
           </div>
         </motion.div>
@@ -222,7 +223,7 @@ const TestPage: React.FC = () => {
   }
   
   if (!currentSubject || !currentQuestion) {
-    return <div className="container mx-auto p-8 text-center">Loading test...</div>;
+    return <div className="container mx-auto p-8 text-center">Chargement du test...</div>;
   }
   
   // Confirmation dialog for submitting test early
@@ -234,22 +235,22 @@ const TestPage: React.FC = () => {
         className="bg-white rounded-lg p-6 max-w-md w-full shadow-2xl"
       >
         <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-center mb-4">Submit Test Early?</h3>
+        <h3 className="text-xl font-bold text-center mb-4">Soumettre le Test Maintenant ?</h3>
         <p className="text-gray-600 mb-6 text-center">
-          You haven't completed all questions. Are you sure you want to submit your test?
+          Vous n'avez pas terminé toutes les questions. Êtes-vous sûr de vouloir soumettre votre test ?
         </p>
         <div className="flex space-x-4">
           <button
             onClick={() => setShowConfirmation(false)}
             className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            Continue Test
+            Continuer le Test
           </button>
           <button
             onClick={handleSubmitTest}
             className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            Submit Now
+            Soumettre Maintenant
           </button>
         </div>
       </motion.div>
@@ -260,7 +261,7 @@ const TestPage: React.FC = () => {
     <>
       {showConfirmation && <ConfirmationDialog />}
       
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Progress bar and timer */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <div className="flex items-center mb-4 md:mb-0">
@@ -269,14 +270,14 @@ const TestPage: React.FC = () => {
               {subjectInfo[currentSubject].title}
             </span>
             <span className="ml-2 text-gray-500">
-              Question {currentQuestionIndex + 1} of {questions.length}
+              Question {currentQuestionIndex + 1} sur {questions.length}
             </span>
           </div>
           
           <div className="flex items-center space-x-4">
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
-              <div className={`font-mono font-semibold ${timeLeft < 60 ? 'text-red-600' : 'text-gray-800'}`}>
+              <div className="text-sm text-gray-500 mb-1">Temps Restant</div>
+              <div className={`font-mono font-semibold text-lg ${timeLeft < 120 ? 'text-red-600' : 'text-gray-800'}`}>
                 {formatTime(timeLeft)}
               </div>
             </div>
@@ -285,13 +286,13 @@ const TestPage: React.FC = () => {
               onClick={() => setShowConfirmation(true)}
               className="bg-primary-700 hover:bg-primary-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
-              Submit Test
+              Soumettre le Test
             </button>
           </div>
         </div>
         
         {/* Progress bar */}
-        <div className="w-full h-2 bg-gray-200 rounded-full mb-8">
+        <div className="w-full h-3 bg-gray-200 rounded-full mb-8">
           <div
             className={`h-full ${getSubjectColorClass()} rounded-full transition-all duration-300`}
             style={{ width: `${getProgressPercentage()}%` }}
@@ -306,68 +307,94 @@ const TestPage: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="bg-white p-6 md:p-8 rounded-xl shadow-md mb-6"
+            className="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-6 border-l-4 border-current"
+            style={{ borderLeftColor: `var(--color-${currentSubject})` }}
           >
-            <h2 className="text-xl md:text-2xl font-heading font-semibold mb-6">
-              {currentQuestion.question}
-            </h2>
+            <div className="mb-4">
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-${currentSubject} bg-opacity-10 text-${currentSubject} mb-2`}>
+                {currentQuestion.topic}
+              </span>
+            </div>
+            
+            <div className="mb-8">
+              <QuestionRenderer 
+                content={currentQuestion.question}
+                className="text-xl md:text-2xl font-heading font-semibold leading-relaxed"
+              />
+            </div>
             
             <div className="space-y-4 mb-8">
               {Object.entries(currentQuestion.options).map(([key, value]) => (
                 <div
                   key={key}
                   onClick={() => handleSelectAnswer(currentQuestion.id, key)}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                     userAnswers[currentQuestion.id] === key
-                      ? `bg-${currentSubject}-100 border-${currentSubject} text-${currentSubject}-800`
+                      ? `bg-${currentSubject} bg-opacity-10 border-${currentSubject} shadow-md`
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex items-start">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold ${
                       userAnswers[currentQuestion.id] === key
                         ? `bg-${currentSubject} text-white`
                         : 'bg-gray-100 text-gray-700'
                     }`}>
                       {formatOptionLetter(key)}
                     </div>
-                    <div className="pt-1">{value}</div>
+                    <div className="pt-2 flex-1">
+                      <QuestionRenderer content={value} />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <button
                 onClick={handlePrevQuestion}
                 disabled={currentQuestionIndex === 0}
-                className={`flex items-center px-4 py-2 rounded-lg ${
+                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all ${
                   currentQuestionIndex === 0
                     ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100 hover:shadow-md'
                 }`}
               >
-                <ChevronLeft className="w-5 h-5 mr-1" />
-                Previous
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Précédent
               </button>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-1">Difficulté</p>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div
+                      key={level}
+                      className={`w-3 h-3 rounded-full ${
+                        level <= 5 ? `bg-${currentSubject}` : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
               
               <button
                 onClick={handleNextQuestion}
-                className={`flex items-center px-5 py-2 rounded-lg ${
+                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg ${
                   isCurrentQuestionAnswered()
-                    ? `bg-${currentSubject} text-white hover:bg-${currentSubject}-600`
+                    ? `bg-${currentSubject} text-white hover:opacity-90`
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {currentQuestionIndex < questions.length - 1 ? (
                   <>
-                    Next
-                    <ChevronRight className="w-5 h-5 ml-1" />
+                    Suivant
+                    <ChevronRight className="w-5 h-5 ml-2" />
                   </>
                 ) : (
                   <>
-                    Next Subject
-                    <ChevronRight className="w-5 h-5 ml-1" />
+                    Matière Suivante
+                    <ChevronRight className="w-5 h-5 ml-2" />
                   </>
                 )}
               </button>
@@ -377,23 +404,38 @@ const TestPage: React.FC = () => {
         
         {/* Question navigation */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="font-medium text-lg mb-4">Question Navigation</h3>
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+          <h3 className="font-medium text-lg mb-4">Navigation des Questions</h3>
+          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
             {questions.map((q, index) => (
               <button
                 key={q.id}
                 onClick={() => setCurrentQuestionIndex(index)}
-                className={`w-full h-10 rounded-md flex items-center justify-center font-medium ${
+                className={`w-full h-12 rounded-md flex items-center justify-center font-medium transition-all ${
                   index === currentQuestionIndex
-                    ? `bg-${currentSubject} text-white`
+                    ? `bg-${currentSubject} text-white shadow-md`
                     : userAnswers[q.id]
-                    ? `bg-${currentSubject}-100 text-${currentSubject}-800 border border-${currentSubject}-200`
+                    ? `bg-${currentSubject} bg-opacity-20 text-${currentSubject} border-2 border-${currentSubject} border-opacity-30`
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {index + 1}
               </button>
             ))}
+          </div>
+          
+          <div className="mt-4 flex items-center justify-center space-x-6 text-sm">
+            <div className="flex items-center space-x-2">
+              <div className={`w-4 h-4 rounded bg-${currentSubject}`}></div>
+              <span>Question actuelle</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className={`w-4 h-4 rounded bg-${currentSubject} bg-opacity-20 border-2 border-${currentSubject} border-opacity-30`}></div>
+              <span>Répondue</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-gray-100"></div>
+              <span>Non répondue</span>
+            </div>
           </div>
         </div>
       </div>
