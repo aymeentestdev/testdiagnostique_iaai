@@ -24,7 +24,7 @@ export interface SubjectResult {
   correct: number;
   percentage: number;
   weakTopics: string[];
-  recommendedHours: number;
+  allocatedHours: number;
   studyPlan: string[];
 }
 
@@ -35,6 +35,7 @@ export interface TestResults {
     percentage: number;
   };
   subjects: Record<SubjectType, SubjectResult>;
+  totalStudyHours: number;
   recommendations: string[];
 }
 
@@ -61,152 +62,121 @@ export const TestProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return getAllQuestions();
   };
 
-  // Fonction pour déterminer les heures recommandées basées sur le pourcentage
-  const getRecommendedHours = (percentage: number): number => {
-    if (percentage < 25) return 50;
-    if (percentage < 50) return 30;
-    if (percentage < 70) return 20;
-    return 10;
+  // Fonction pour déterminer le temps total de préparation basé sur la performance globale
+  const getTotalStudyHours = (overallPercentage: number): number => {
+    if (overallPercentage < 25) return 60; // Niveau très faible
+    if (overallPercentage < 40) return 50; // Niveau faible
+    if (overallPercentage < 55) return 40; // Niveau moyen-faible
+    if (overallPercentage < 70) return 30; // Niveau moyen
+    if (overallPercentage < 85) return 20; // Niveau bon
+    return 15; // Niveau excellent
   };
 
-  // Fonction pour générer le plan d'étude basé sur les heures recommandées
-  const generateStudyPlan = (subject: SubjectType, hours: number, weakTopics: string[]): string[] => {
-    const subjectPlans = {
-      math: {
-        10: [
-          "Révision rapide des formules essentielles",
-          "Exercices de perfectionnement sur les points forts",
-          "Résolution de 2 annales récentes",
-          "Optimisation des techniques de calcul rapide"
-        ],
-        20: [
-          "Consolidation des concepts avancés",
-          "Pratique intensive des exercices types",
-          "Résolution de 4 annales complètes",
-          "Travail sur la gestion du temps",
-          "Révision des méthodes de résolution"
-        ],
-        30: [
-          "Révision approfondie des bases",
-          "Maîtrise des concepts fondamentaux",
-          "Exercices progressifs par niveau de difficulté",
-          "Résolution de 6 annales avec correction détaillée",
-          "Travail spécifique sur les domaines faibles",
-          "Entraînement aux calculs complexes"
-        ],
-        50: [
-          "Apprentissage complet des concepts de base",
-          "Maîtrise des opérations arithmétiques fondamentales",
-          "Étude systématique de l'algèbre élémentaire",
-          "Introduction progressive à l'analyse",
-          "Pratique intensive avec exercices guidés",
-          "Résolution de 10 annales avec accompagnement",
-          "Renforcement des bases en géométrie",
-          "Développement des réflexes de calcul"
-        ]
-      },
-      physics: {
-        10: [
-          "Révision des formules clés",
-          "Exercices d'application directe",
-          "Résolution de 2 annales récentes",
-          "Perfectionnement des unités et conversions"
-        ],
-        20: [
-          "Approfondissement des lois physiques",
-          "Exercices de synthèse",
-          "Résolution de 4 annales complètes",
-          "Maîtrise des schémas et graphiques",
-          "Travail sur l'analyse dimensionnelle"
-        ],
-        30: [
-          "Révision des principes fondamentaux",
-          "Compréhension des phénomènes physiques",
-          "Exercices d'application variés",
-          "Résolution de 6 annales avec analyse",
-          "Travail sur les domaines faibles identifiés",
-          "Maîtrise des calculs vectoriels"
-        ],
-        50: [
-          "Étude complète des concepts de base",
-          "Compréhension des grandeurs physiques",
-          "Maîtrise des unités du système international",
-          "Apprentissage des lois fondamentales",
-          "Exercices guidés et progressifs",
-          "Résolution de 10 annales avec support",
-          "Développement de l'intuition physique",
-          "Pratique intensive des calculs"
-        ]
-      },
-      chemistry: {
-        10: [
-          "Révision des formules chimiques essentielles",
-          "Exercices de stœchiométrie avancée",
-          "Résolution de 2 annales récentes",
-          "Perfectionnement des équilibres chimiques"
-        ],
-        20: [
-          "Approfondissement des réactions chimiques",
-          "Maîtrise des calculs de concentration",
-          "Résolution de 4 annales complètes",
-          "Travail sur la cinétique chimique",
-          "Révision de la thermochimie"
-        ],
-        30: [
-          "Révision des concepts fondamentaux",
-          "Compréhension des liaisons chimiques",
-          "Exercices sur les différents types de réactions",
-          "Résolution de 6 annales avec analyse détaillée",
-          "Travail spécifique sur les points faibles",
-          "Maîtrise de l'équilibrage des équations"
-        ],
-        50: [
-          "Apprentissage complet des bases de la chimie",
-          "Compréhension de la structure atomique",
-          "Maîtrise du tableau périodique",
-          "Étude des liaisons et molécules",
-          "Exercices progressifs et guidés",
-          "Résolution de 10 annales avec accompagnement",
-          "Développement des réflexes en stœchiométrie",
-          "Pratique intensive des calculs chimiques"
-        ]
-      },
-      biology: {
-        10: [
-          "Révision des processus biologiques clés",
-          "Exercices sur la génétique avancée",
-          "Résolution de 2 annales récentes",
-          "Perfectionnement de la physiologie"
-        ],
-        20: [
-          "Approfondissement des mécanismes cellulaires",
-          "Maîtrise des cycles biologiques",
-          "Résolution de 4 annales complètes",
-          "Travail sur l'écologie et évolution",
-          "Révision de la biochimie"
-        ],
-        30: [
-          "Révision des concepts fondamentaux",
-          "Compréhension de l'organisation du vivant",
-          "Exercices sur les différents systèmes",
-          "Résolution de 6 annales avec analyse",
-          "Travail spécifique sur les domaines faibles",
-          "Maîtrise des schémas biologiques"
-        ],
-        50: [
-          "Apprentissage complet des bases biologiques",
-          "Compréhension de la cellule et ses composants",
-          "Étude des grandes fonctions du vivant",
-          "Maîtrise de la classification du vivant",
-          "Exercices progressifs et guidés",
-          "Résolution de 10 annales avec support",
-          "Développement de l'observation scientifique",
-          "Pratique intensive de l'analyse biologique"
-        ]
+  // Fonction pour répartir les heures entre les matières selon les performances
+  const allocateStudyHours = (subjectPerformances: Record<SubjectType, number>, totalHours: number): Record<SubjectType, number> => {
+    const subjects: SubjectType[] = ['math', 'physics', 'chemistry', 'biology'];
+    
+    // Calculer les scores inversés (plus faible = plus d'heures)
+    const invertedScores = subjects.map(subject => ({
+      subject,
+      score: subjectPerformances[subject],
+      invertedScore: 100 - subjectPerformances[subject] // Plus le score est faible, plus l'inversé est élevé
+    }));
+
+    // Calculer la somme des scores inversés
+    const totalInvertedScore = invertedScores.reduce((sum, item) => sum + item.invertedScore, 0);
+
+    // Répartir les heures proportionnellement aux scores inversés
+    const allocation: Record<SubjectType, number> = {} as Record<SubjectType, number>;
+    let allocatedHours = 0;
+
+    invertedScores.forEach((item, index) => {
+      if (index === invertedScores.length - 1) {
+        // Dernière matière : attribuer les heures restantes pour éviter les erreurs d'arrondi
+        allocation[item.subject] = Math.max(2, totalHours - allocatedHours);
+      } else {
+        // Calculer la proportion et arrondir
+        const proportion = item.invertedScore / totalInvertedScore;
+        const hours = Math.max(2, Math.round(proportion * totalHours)); // Minimum 2h par matière
+        allocation[item.subject] = hours;
+        allocatedHours += hours;
       }
+    });
+
+    return allocation;
+  };
+
+  // Fonction pour générer le plan d'étude basé sur les heures allouées et les faiblesses
+  const generateStudyPlan = (subject: SubjectType, hours: number, weakTopics: string[], percentage: number): string[] => {
+    const baseActivities = {
+      math: [
+        "Révision des concepts fondamentaux",
+        "Exercices d'application progressive",
+        "Résolution d'annales récentes",
+        "Maîtrise des formules essentielles",
+        "Entraînement aux calculs rapides",
+        "Travail sur les méthodes de résolution",
+        "Perfectionnement des techniques avancées",
+        "Optimisation de la gestion du temps"
+      ],
+      physics: [
+        "Révision des lois physiques fondamentales",
+        "Compréhension des phénomènes physiques",
+        "Exercices d'application des formules",
+        "Maîtrise des unités et conversions",
+        "Analyse de schémas et graphiques",
+        "Résolution de problèmes complexes",
+        "Travail sur l'analyse dimensionnelle",
+        "Perfectionnement des calculs vectoriels"
+      ],
+      chemistry: [
+        "Révision des concepts de base",
+        "Maîtrise des réactions chimiques",
+        "Exercices de stœchiométrie",
+        "Compréhension des équilibres",
+        "Travail sur la cinétique chimique",
+        "Étude de la thermochimie",
+        "Perfectionnement des calculs",
+        "Analyse des mécanismes réactionnels"
+      ],
+      biology: [
+        "Révision de l'organisation du vivant",
+        "Compréhension des processus biologiques",
+        "Étude des mécanismes cellulaires",
+        "Maîtrise des cycles biologiques",
+        "Travail sur la génétique",
+        "Analyse des systèmes physiologiques",
+        "Perfectionnement de l'écologie",
+        "Développement de l'observation scientifique"
+      ]
     };
 
-    return subjectPlans[subject][hours as keyof typeof subjectPlans[typeof subject]] || [];
+    const activities = baseActivities[subject];
+    const selectedActivities: string[] = [];
+
+    // Sélectionner les activités en fonction du nombre d'heures
+    const numActivities = Math.min(Math.max(3, Math.ceil(hours / 3)), activities.length);
+    
+    // Prioriser les activités de base si le pourcentage est faible
+    if (percentage < 50) {
+      selectedActivities.push(...activities.slice(0, numActivities));
+    } else if (percentage < 75) {
+      // Mélange d'activités de base et avancées
+      const baseCount = Math.ceil(numActivities * 0.6);
+      const advancedCount = numActivities - baseCount;
+      selectedActivities.push(...activities.slice(0, baseCount));
+      selectedActivities.push(...activities.slice(-advancedCount));
+    } else {
+      // Focus sur les activités avancées
+      selectedActivities.push(...activities.slice(-numActivities));
+    }
+
+    // Ajouter des activités spécifiques aux faiblesses détectées
+    if (weakTopics.length > 0) {
+      selectedActivities.unshift(`Focus spécial sur : ${weakTopics.slice(0, 2).join(', ')}`);
+    }
+
+    return selectedActivities;
   };
 
   const calculateResults = (): TestResults => {
@@ -217,10 +187,10 @@ export const TestProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let totalCorrect = 0;
     
     const subjectResults: Record<SubjectType, SubjectResult> = {
-      math: { total: 0, correct: 0, percentage: 0, weakTopics: [], recommendedHours: 0, studyPlan: [] },
-      physics: { total: 0, correct: 0, percentage: 0, weakTopics: [], recommendedHours: 0, studyPlan: [] },
-      chemistry: { total: 0, correct: 0, percentage: 0, weakTopics: [], recommendedHours: 0, studyPlan: [] },
-      biology: { total: 0, correct: 0, percentage: 0, weakTopics: [], recommendedHours: 0, studyPlan: [] },
+      math: { total: 0, correct: 0, percentage: 0, weakTopics: [], allocatedHours: 0, studyPlan: [] },
+      physics: { total: 0, correct: 0, percentage: 0, weakTopics: [], allocatedHours: 0, studyPlan: [] },
+      chemistry: { total: 0, correct: 0, percentage: 0, weakTopics: [], allocatedHours: 0, studyPlan: [] },
+      biology: { total: 0, correct: 0, percentage: 0, weakTopics: [], allocatedHours: 0, studyPlan: [] },
     };
     
     // Track topics per subject with performance
@@ -264,47 +234,72 @@ export const TestProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           subjectResults[subject].weakTopics.push(topic);
         }
       });
-
-      // Determine recommended hours and study plan
-      const recommendedHours = getRecommendedHours(subjectResults[subject].percentage);
-      subjectResults[subject].recommendedHours = recommendedHours;
-      subjectResults[subject].studyPlan = generateStudyPlan(subject, recommendedHours, subjectResults[subject].weakTopics);
+    });
+    
+    // Calculate overall performance
+    const overallPercentage = (totalCorrect / totalQuestions) * 100;
+    
+    // Determine total study hours based on overall performance
+    const totalStudyHours = getTotalStudyHours(overallPercentage);
+    
+    // Get subject performances for allocation
+    const subjectPerformances: Record<SubjectType, number> = {
+      math: subjectResults.math.percentage,
+      physics: subjectResults.physics.percentage,
+      chemistry: subjectResults.chemistry.percentage,
+      biology: subjectResults.biology.percentage,
+    };
+    
+    // Allocate hours between subjects
+    const hourAllocation = allocateStudyHours(subjectPerformances, totalStudyHours);
+    
+    // Generate study plans for each subject
+    subjects.forEach(subject => {
+      const allocatedHours = hourAllocation[subject];
+      subjectResults[subject].allocatedHours = allocatedHours;
+      subjectResults[subject].studyPlan = generateStudyPlan(
+        subject, 
+        allocatedHours, 
+        subjectResults[subject].weakTopics,
+        subjectResults[subject].percentage
+      );
     });
     
     // Generate personalized recommendations in French
     const recommendations: string[] = [];
     
     // Overall recommendations
-    const overallPercentage = (totalCorrect / totalQuestions) * 100;
-    
     if (overallPercentage < 40) {
-      recommendations.push("Votre performance globale indique un besoin d'amélioration significative. Nous recommandons un plan d'étude intensif avec un focus particulier sur les matières les plus faibles.");
+      recommendations.push(`Votre performance globale (${overallPercentage.toFixed(1)}%) nécessite une préparation intensive de ${totalStudyHours} heures. Concentrez-vous d'abord sur les bases avant d'aborder les concepts avancés.`);
     } else if (overallPercentage < 70) {
-      recommendations.push("Vous avez une compréhension modérée des concepts. Concentrez-vous sur le renforcement de vos connaissances dans les domaines spécifiques où vous avez moins bien réussi.");
+      recommendations.push(`Avec ${overallPercentage.toFixed(1)}% de réussite, un plan de ${totalStudyHours} heures vous permettra de consolider vos acquis et d'améliorer vos points faibles.`);
     } else {
-      recommendations.push("Excellent travail ! Vous avez une base solide. Continuez à affiner votre compréhension dans les quelques domaines où vous avez rencontré des difficultés.");
+      recommendations.push(`Excellente performance (${overallPercentage.toFixed(1)}%) ! Un programme ciblé de ${totalStudyHours} heures suffira pour optimiser votre préparation.`);
     }
     
-    // Subject-specific recommendations based on recommended hours
-    subjects.forEach(subject => {
-      const result = subjectResults[subject];
-      const subjectName = {
-        math: 'mathématiques',
-        physics: 'physique',
-        chemistry: 'chimie',
-        biology: 'biologie'
-      }[subject];
-      
-      if (result.recommendedHours === 50) {
-        recommendations.push(`En ${subjectName}, nous recommandons 50 heures de préparation intensive pour construire des bases solides.`);
-      } else if (result.recommendedHours === 30) {
-        recommendations.push(`En ${subjectName}, 30 heures de préparation ciblée vous permettront d'améliorer significativement vos résultats.`);
-      } else if (result.recommendedHours === 20) {
-        recommendations.push(`En ${subjectName}, 20 heures de révision approfondie consolideront vos acquis.`);
-      } else {
-        recommendations.push(`En ${subjectName}, 10 heures de perfectionnement suffiront pour optimiser votre performance.`);
-      }
-    });
+    // Subject-specific recommendations
+    const sortedSubjects = subjects.sort((a, b) => subjectResults[a].percentage - subjectResults[b].percentage);
+    const weakestSubject = sortedSubjects[0];
+    const strongestSubject = sortedSubjects[sortedSubjects.length - 1];
+    
+    const subjectNames = {
+      math: 'mathématiques',
+      physics: 'physique',
+      chemistry: 'chimie',
+      biology: 'biologie'
+    };
+    
+    recommendations.push(`Votre point faible principal est en ${subjectNames[weakestSubject]} (${subjectResults[weakestSubject].percentage.toFixed(1)}%) - nous avons alloué ${hourAllocation[weakestSubject]} heures pour cette matière.`);
+    
+    if (subjectResults[strongestSubject].percentage > 80) {
+      recommendations.push(`Vous excellez en ${subjectNames[strongestSubject]} (${subjectResults[strongestSubject].percentage.toFixed(1)}%) - seulement ${hourAllocation[strongestSubject]} heures sont nécessaires pour maintenir ce niveau.`);
+    }
+    
+    // Time distribution recommendation
+    const hoursDistribution = subjects.map(subject => 
+      `${subjectNames[subject]}: ${hourAllocation[subject]}h`
+    ).join(', ');
+    recommendations.push(`Répartition recommandée du temps d'étude : ${hoursDistribution}.`);
     
     return {
       overall: {
@@ -313,6 +308,7 @@ export const TestProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         percentage: overallPercentage,
       },
       subjects: subjectResults,
+      totalStudyHours,
       recommendations,
     };
   };

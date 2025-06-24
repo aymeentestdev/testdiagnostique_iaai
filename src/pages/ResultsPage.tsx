@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
-import { Calculator, Atom, FlaskRound as Flask, Microscope, Download, Award, BookOpen, Brain, ChevronRight, Clock, Target, TrendingUp } from 'lucide-react';
+import { Calculator, Atom, FlaskRound as Flask, Microscope, Download, Award, BookOpen, Brain, ChevronRight, Clock, Target, TrendingUp, PieChart } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { useTest } from '../context/TestContext';
@@ -20,9 +20,21 @@ const ResultsPage: React.FC = () => {
   const subjectsChartRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDownloadMessage, setShowDownloadMessage] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const results = calculateResults();
   const subjectInfo = getSubjectInfo();
+  
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Redirect if no username or no answers
   useEffect(() => {
@@ -67,6 +79,24 @@ const ResultsPage: React.FC = () => {
       },
     ],
   };
+
+  // Chart data for time allocation (new)
+  const timeAllocationData = {
+    labels: Object.entries(results.subjects).map(([subject]) => subjectInfo[subject as SubjectType].title),
+    datasets: [
+      {
+        data: Object.entries(results.subjects).map(([, data]) => data.allocatedHours),
+        backgroundColor: [
+          '#3B82F6', // Math - blue
+          '#8B5CF6', // Physics - purple
+          '#EC4899', // Chemistry - pink
+          '#10B981', // Biology - green
+        ],
+        borderColor: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'],
+        borderWidth: 2,
+      },
+    ],
+  };
   
   // Chart options
   const doughnutOptions = {
@@ -96,8 +126,23 @@ const ResultsPage: React.FC = () => {
     },
     maintainAspectRatio: false,
   };
+
+  const timeAllocationOptions = {
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => `${context.label}: ${context.parsed}h`,
+        },
+      },
+    },
+    cutout: '60%',
+    maintainAspectRatio: false,
+  };
   
-  // Generate and download PDF with academic design
+  // Generate and download PDF with updated logic
   const handleDownloadPDF = async () => {
     setIsLoading(true);
     
@@ -172,6 +217,7 @@ const ResultsPage: React.FC = () => {
         ['Total des Questions', results.overall.total.toString()],
         ['Réponses Correctes', results.overall.correct.toString()],
         ['Score Global', `${results.overall.percentage.toFixed(1)}%`],
+        ['Temps Total de Préparation', `${results.totalStudyHours} heures`],
         ['Niveau de Performance', results.overall.percentage >= 80 ? 'Excellent' : 
                                  results.overall.percentage >= 65 ? 'Bien' : 
                                  results.overall.percentage >= 50 ? 'Moyen' : 'À Améliorer']
@@ -186,7 +232,7 @@ const ResultsPage: React.FC = () => {
           cellPadding: 3,
         },
         columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 60 },
+          0: { fontStyle: 'bold', cellWidth: 70 },
           1: { cellWidth: 40, halign: 'center' },
         },
         margin: { left: 20, right: 20 },
@@ -208,13 +254,13 @@ const ResultsPage: React.FC = () => {
         subjectInfo[subject as SubjectType].title,
         `${data.correct}/${data.total}`,
         `${data.percentage.toFixed(1)}%`,
-        `${data.recommendedHours}h`,
+        `${data.allocatedHours}h`,
         data.weakTopics.length > 0 ? data.weakTopics.slice(0, 2).join(', ') + (data.weakTopics.length > 2 ? '...' : '') : 'Aucune'
       ]);
       
       (doc as any).autoTable({
         startY: currentY,
-        head: [['Matière', 'Score', 'Pourcentage', 'Préparation', 'Domaines à Améliorer']],
+        head: [['Matière', 'Score', 'Pourcentage', 'Temps Alloué', 'Domaines à Améliorer']],
         body: subjectTableData,
         theme: 'striped',
         headStyles: {
@@ -269,7 +315,7 @@ const ResultsPage: React.FC = () => {
         doc.setTextColor(...primaryBlue);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
-        doc.text(`${subjectInfo[subject as SubjectType].title} - Plan de ${data.recommendedHours} heures`, 20, currentY + 7);
+        doc.text(`${subjectInfo[subject as SubjectType].title} - ${data.allocatedHours} heures allouées`, 20, currentY + 7);
         
         currentY += 18;
         
@@ -394,19 +440,16 @@ const ResultsPage: React.FC = () => {
     return { label: 'À Améliorer', color: 'text-red-500' };
   };
 
-  // Get color for recommended hours
+  // Get color for allocated hours
   const getHoursColor = (hours: number) => {
-    switch (hours) {
-      case 10: return 'bg-green-100 text-green-800 border-green-200';
-      case 20: return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 30: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 50: return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+    if (hours <= 5) return 'bg-green-100 text-green-800 border-green-200';
+    if (hours <= 10) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (hours <= 15) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-red-100 text-red-800 border-red-200';
   };
   
   return (
-    <div className="container mx-auto px-4 py-10 max-w-6xl">
+    <div className="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
       {/* Download notification */}
       {showDownloadMessage && (
         <div className="fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50 animate-fade-in">
@@ -423,50 +466,61 @@ const ResultsPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8 border-t-4 border-primary-600"
+        className="bg-white rounded-xl shadow-md p-4 md:p-8 mb-6 md:mb-8 border-t-4 border-primary-600"
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <div>
-            <h1 className="font-heading text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="font-heading text-xl md:text-3xl font-bold text-gray-900 mb-2">
               Vos Résultats du Test Diagnostique
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm md:text-base">
               Bonjour {userName}, voici une analyse détaillée de votre performance.
             </p>
           </div>
           
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isLoading}
-            className="mt-4 md:mt-0 flex items-center space-x-2 bg-primary-700 hover:bg-primary-800 text-white font-medium px-4 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <span>Génération du PDF...</span>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                <span>Télécharger le Rapport</span>
-              </>
-            )}
-          </button>
+          {!isMobile && (
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isLoading}
+              className="mt-4 md:mt-0 flex items-center space-x-2 bg-primary-700 hover:bg-primary-800 text-white font-medium px-4 py-2 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <span>Génération du PDF...</span>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  <span>Télécharger le Rapport</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
         
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
               <Award className="w-5 h-5 text-primary-600" />
-              <h3 className="font-semibold">Score Global</h3>
+              <h3 className="font-semibold text-sm md:text-base">Score Global</h3>
             </div>
-            <p className="text-3xl font-bold text-primary-700">{results.overall.percentage.toFixed(1)}%</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-2xl md:text-3xl font-bold text-primary-700">{results.overall.percentage.toFixed(1)}%</p>
+            <p className="text-xs md:text-sm text-gray-500">
               {results.overall.correct} correctes sur {results.overall.total} questions
             </p>
           </div>
           
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
+              <Clock className="w-5 h-5 text-primary-600" />
+              <h3 className="font-semibold text-sm md:text-base">Temps Total</h3>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold text-primary-700">{results.totalStudyHours}h</p>
+            <p className="text-xs md:text-sm text-gray-500">Préparation recommandée</p>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center space-x-2 mb-2">
               <BookOpen className="w-5 h-5 text-primary-600" />
-              <h3 className="font-semibold">Meilleure Matière</h3>
+              <h3 className="font-semibold text-sm md:text-base">Meilleure Matière</h3>
             </div>
             {(() => {
               const subjects = Object.entries(results.subjects);
@@ -479,11 +533,11 @@ const ResultsPage: React.FC = () => {
                   <>
                     <div className="flex items-center space-x-2">
                       {getSubjectIcon(bestSubject.subject)}
-                      <p className="text-xl font-bold text-gray-800">
+                      <p className="text-lg md:text-xl font-bold text-gray-800">
                         {subjectInfo[bestSubject.subject as SubjectType].title}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-500">{bestSubject.percentage.toFixed(1)}% de réussite</p>
+                    <p className="text-xs md:text-sm text-gray-500">{bestSubject.percentage.toFixed(1)}% de réussite</p>
                   </>
                 );
               }
@@ -494,14 +548,14 @@ const ResultsPage: React.FC = () => {
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
               <Brain className="w-5 h-5 text-primary-600" />
-              <h3 className="font-semibold">Niveau de Performance</h3>
+              <h3 className="font-semibold text-sm md:text-base">Niveau</h3>
             </div>
             {(() => {
               const { label, color } = getPerformanceLevel(results.overall.percentage);
               return (
                 <>
-                  <p className={`text-2xl font-bold ${color}`}>{label}</p>
-                  <p className="text-sm text-gray-500">Basé sur votre performance globale</p>
+                  <p className={`text-xl md:text-2xl font-bold ${color}`}>{label}</p>
+                  <p className="text-xs md:text-sm text-gray-500">Performance globale</p>
                 </>
               );
             })()}
@@ -510,24 +564,24 @@ const ResultsPage: React.FC = () => {
       </motion.div>
       
       {/* Charts section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
         {/* Overall performance chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-md p-6"
+          className="bg-white rounded-xl shadow-md p-4 md:p-6"
         >
-          <h2 className="font-heading text-xl font-semibold mb-6">Performance Globale</h2>
-          <div className="h-64" ref={overallChartRef}>
+          <h2 className="font-heading text-lg md:text-xl font-semibold mb-4 md:mb-6">Performance Globale</h2>
+          <div className="h-48 md:h-64" ref={overallChartRef}>
             <Doughnut data={overallChartData} options={doughnutOptions} />
           </div>
           <div className="mt-4 text-center">
-            <p className="text-lg font-semibold">
-              Vous avez obtenu {results.overall.percentage.toFixed(1)}%
+            <p className="text-base md:text-lg font-semibold">
+              {results.overall.percentage.toFixed(1)}%
             </p>
-            <p className="text-sm text-gray-600">
-              {results.overall.correct} correctes sur {results.overall.total} questions
+            <p className="text-xs md:text-sm text-gray-600">
+              {results.overall.correct}/{results.overall.total} questions
             </p>
           </div>
         </motion.div>
@@ -537,11 +591,35 @@ const ResultsPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-md p-6"
+          className="bg-white rounded-xl shadow-md p-4 md:p-6"
         >
-          <h2 className="font-heading text-xl font-semibold mb-6">Performance par Matière</h2>
-          <div className="h-64" ref={subjectsChartRef}>
+          <h2 className="font-heading text-lg md:text-xl font-semibold mb-4 md:mb-6">Performance par Matière</h2>
+          <div className="h-48 md:h-64" ref={subjectsChartRef}>
             <Bar data={subjectsChartData} options={barOptions} />
+          </div>
+        </motion.div>
+
+        {/* Time allocation chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-xl shadow-md p-4 md:p-6"
+        >
+          <h2 className="font-heading text-lg md:text-xl font-semibold mb-4 md:mb-6 flex items-center">
+            <PieChart className="w-5 h-5 mr-2" />
+            Répartition du Temps
+          </h2>
+          <div className="h-48 md:h-64">
+            <Doughnut data={timeAllocationData} options={timeAllocationOptions} />
+          </div>
+          <div className="mt-4 text-center">
+            <p className="text-base md:text-lg font-semibold">
+              {results.totalStudyHours}h au total
+            </p>
+            <p className="text-xs md:text-sm text-gray-600">
+              Répartition intelligente
+            </p>
           </div>
         </motion.div>
       </div>
@@ -550,12 +628,12 @@ const ResultsPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8"
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-xl shadow-md p-4 md:p-8 mb-6 md:mb-8"
       >
-        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-6">Analyse Détaillée par Matière</h2>
+        <h2 className="font-heading text-lg md:text-2xl font-semibold mb-4 md:mb-6">Analyse Détaillée par Matière</h2>
         
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {Object.entries(results.subjects).map(([subject, data]) => {
             const subjectType = subject as SubjectType;
             const { label, color } = getPerformanceLevel(data.percentage);
@@ -564,30 +642,30 @@ const ResultsPage: React.FC = () => {
               <div key={subject} className={`border-l-4 border-${subjectType} p-4 bg-gray-50 rounded-r-lg`}>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                   <div className="flex items-center space-x-3 mb-2 md:mb-0">
-                    <div className={`w-10 h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
+                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
                       {getSubjectIcon(subject)}
                     </div>
-                    <h3 className="font-heading text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
+                    <h3 className="font-heading text-base md:text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 md:space-x-4 text-sm md:text-base">
                     <div>
-                      <p className="text-sm text-gray-500">Score</p>
+                      <p className="text-xs text-gray-500">Score</p>
                       <p className="font-semibold">{data.correct}/{data.total}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Pourcentage</p>
+                      <p className="text-xs text-gray-500">Pourcentage</p>
                       <p className="font-semibold">{data.percentage.toFixed(1)}%</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Niveau</p>
+                      <p className="text-xs text-gray-500">Niveau</p>
                       <p className={`font-semibold ${color}`}>{label}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Préparation</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getHoursColor(data.recommendedHours)}`}>
-                        <Clock className="w-4 h-4 mr-1" />
-                        {data.recommendedHours}h
+                      <p className="text-xs text-gray-500">Temps Alloué</p>
+                      <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium border ${getHoursColor(data.allocatedHours)}`}>
+                        <Clock className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                        {data.allocatedHours}h
                       </span>
                     </div>
                   </div>
@@ -595,8 +673,8 @@ const ResultsPage: React.FC = () => {
                 
                 {data.weakTopics.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-sm font-medium text-gray-700 mb-1">Domaines à améliorer :</p>
-                    <ul className="list-disc list-inside text-sm text-gray-600 ml-2 space-y-1">
+                    <p className="text-xs md:text-sm font-medium text-gray-700 mb-1">Domaines à améliorer :</p>
+                    <ul className="list-disc list-inside text-xs md:text-sm text-gray-600 ml-2 space-y-1">
                       {data.weakTopics.map((topic) => (
                         <li key={topic}>{topic}</li>
                       ))}
@@ -609,71 +687,73 @@ const ResultsPage: React.FC = () => {
         </div>
       </motion.div>
       
-      {/* Study Plans */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8"
-      >
-        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-6 flex items-center">
-          <Target className="w-6 h-6 mr-2 text-primary-600" />
-          Plans de Préparation Personnalisés
-        </h2>
-        
-        <div className="space-y-8">
-          {Object.entries(results.subjects).map(([subject, data]) => {
-            const subjectType = subject as SubjectType;
-            
-            return (
-              <div key={subject} className={`border-l-4 border-${subjectType} p-6 bg-gray-50 rounded-r-lg`}>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
-                      {getSubjectIcon(subject)}
+      {/* Study Plans - Hidden on mobile for better UX */}
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-xl shadow-md p-6 md:p-8 mb-6 md:mb-8"
+        >
+          <h2 className="font-heading text-xl md:text-2xl font-semibold mb-6 flex items-center">
+            <Target className="w-6 h-6 mr-2 text-primary-600" />
+            Plans de Préparation Personnalisés
+          </h2>
+          
+          <div className="space-y-8">
+            {Object.entries(results.subjects).map(([subject, data]) => {
+              const subjectType = subject as SubjectType;
+              
+              return (
+                <div key={subject} className={`border-l-4 border-${subjectType} p-6 bg-gray-50 rounded-r-lg`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-full bg-${subjectType} flex items-center justify-center`}>
+                        {getSubjectIcon(subject)}
+                      </div>
+                      <h3 className="font-heading text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
                     </div>
-                    <h3 className="font-heading text-lg font-semibold">{subjectInfo[subjectType].title}</h3>
+                    
+                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getHoursColor(data.allocatedHours)}`}>
+                      <Clock className="w-4 h-4 mr-2" />
+                      {data.allocatedHours} heures allouées
+                    </span>
                   </div>
                   
-                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border-2 ${getHoursColor(data.recommendedHours)}`}>
-                    <Clock className="w-4 h-4 mr-2" />
-                    Plan de {data.recommendedHours} heures
-                  </span>
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h4 className="font-medium text-gray-800 mb-3">Programme de préparation recommandé :</h4>
+                    <ul className="space-y-2">
+                      {data.studyPlan.map((item, index) => (
+                        <li key={index} className="flex items-start">
+                          <ChevronRight className="w-4 h-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h4 className="font-medium text-gray-800 mb-3">Programme de préparation recommandé :</h4>
-                  <ul className="space-y-2">
-                    {data.studyPlan.map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <ChevronRight className="w-4 h-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
       
       {/* Recommendations */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white rounded-xl shadow-md p-6 md:p-8 mb-8"
+        transition={{ delay: 0.6 }}
+        className="bg-white rounded-xl shadow-md p-4 md:p-8 mb-6 md:mb-8"
       >
-        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-6">Recommandations Personnalisées</h2>
+        <h2 className="font-heading text-lg md:text-2xl font-semibold mb-4 md:mb-6">Recommandations Personnalisées</h2>
         
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {results.recommendations.map((recommendation, index) => (
-            <div key={index} className="flex space-x-4 p-3 border-b border-gray-100 last:border-0">
+            <div key={index} className="flex space-x-3 md:space-x-4 p-3 border-b border-gray-100 last:border-0">
               <div className="flex-shrink-0 mt-1">
-                <ChevronRight className="w-5 h-5 text-primary-600" />
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-primary-600" />
               </div>
-              <p className="text-gray-700">{recommendation}</p>
+              <p className="text-sm md:text-base text-gray-700">{recommendation}</p>
             </div>
           ))}
         </div>
@@ -683,52 +763,65 @@ const ResultsPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-primary-900 text-white rounded-xl shadow-md p-6 md:p-8"
+        transition={{ delay: 0.7 }}
+        className="bg-primary-900 text-white rounded-xl shadow-md p-4 md:p-8"
       >
-        <h2 className="font-heading text-xl md:text-2xl font-semibold mb-4">Prochaines Étapes</h2>
-        <p className="mb-6 text-gray-200">
-          Utilisez ces informations pour améliorer votre préparation aux concours d'entrée post-baccalauréat marocains. Considérez les étapes suivantes :
+        <h2 className="font-heading text-lg md:text-2xl font-semibold mb-4">Prochaines Étapes</h2>
+        <p className="mb-6 text-gray-200 text-sm md:text-base">
+          Utilisez ces informations pour améliorer votre préparation aux concours d'entrée post-baccalauréat marocains.
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h3 className="font-medium text-secondary-300 mb-2">Suivre Votre Plan Personnalisé</h3>
-            <p className="text-sm text-gray-200">
-              Respectez les heures de préparation recommandées pour chaque matière selon votre niveau actuel.
+            <h3 className="font-medium text-secondary-300 mb-2 text-sm md:text-base">Suivre Votre Plan Personnalisé</h3>
+            <p className="text-xs md:text-sm text-gray-200">
+              Respectez la répartition de temps recommandée : {results.totalStudyHours}h au total.
+            </p>
+          </div>
+          
+          {!isMobile && (
+            <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+              <h3 className="font-medium text-secondary-300 mb-2">Télécharger Votre Rapport</h3>
+              <p className="text-sm text-gray-200">
+                Sauvegardez vos résultats détaillés en PDF pour référence future.
+              </p>
+            </div>
+          )}
+          
+          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+            <h3 className="font-medium text-secondary-300 mb-2 text-sm md:text-base">Prioriser les Faiblesses</h3>
+            <p className="text-xs md:text-sm text-gray-200">
+              Concentrez-vous d'abord sur les matières avec le plus d'heures allouées.
             </p>
           </div>
           
           <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h3 className="font-medium text-secondary-300 mb-2">Télécharger Votre Rapport</h3>
-            <p className="text-sm text-gray-200">
-              Sauvegardez vos résultats détaillés en PDF pour référence future et pour suivre vos progrès.
-            </p>
-          </div>
-          
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h3 className="font-medium text-secondary-300 mb-2">Chercher de l'Aide Supplémentaire</h3>
-            <p className="text-sm text-gray-200">
-              Considérez le tutorat ou des ressources supplémentaires pour les matières nécessitant plus de 30 heures de préparation.
-            </p>
-          </div>
-          
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <h3 className="font-medium text-secondary-300 mb-2">Reprendre le Test Plus Tard</h3>
-            <p className="text-sm text-gray-200">
-              Après avoir suivi votre plan d'étude, revenez et reprenez le test pour mesurer vos progrès.
+            <h3 className="font-medium text-secondary-300 mb-2 text-sm md:text-base">Reprendre le Test</h3>
+            <p className="text-xs md:text-sm text-gray-200">
+              Après votre préparation, revenez mesurer vos progrès.
             </p>
           </div>
         </div>
         
         <div className="mt-8 text-center">
-          <p className="text-gray-200 mb-4">Merci d'avoir passé le Test Diagnostique IAAI !</p>
-          <button
-            onClick={() => navigate('/')}
-            className="bg-secondary-500 hover:bg-secondary-600 text-primary-900 font-medium px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
-          >
-            Retour à l'Accueil
-          </button>
+          <p className="text-gray-200 mb-4 text-sm md:text-base">Merci d'avoir passé le Test Diagnostique IAAI !</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {isMobile && (
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isLoading}
+                className="bg-secondary-500 hover:bg-secondary-600 text-primary-900 font-medium px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+              >
+                {isLoading ? 'Génération...' : 'Télécharger le Rapport'}
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/')}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium px-6 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              Retour à l'Accueil
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
