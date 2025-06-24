@@ -22,7 +22,19 @@ const TestPage: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isTestComplete, setIsTestComplete] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const subjectInfo = getSubjectInfo();
+  
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // If no username, redirect to landing page
   useEffect(() => {
@@ -130,13 +142,13 @@ const TestPage: React.FC = () => {
     
     switch (currentSubject) {
       case 'math':
-        return <Calculator className="w-6 h-6 text-math" />;
+        return <Calculator className="w-5 h-5 md:w-6 md:h-6 text-math" />;
       case 'physics':
-        return <Atom className="w-6 h-6 text-physics" />;
+        return <Atom className="w-5 h-5 md:w-6 md:h-6 text-physics" />;
       case 'chemistry':
-        return <Flask className="w-6 h-6 text-chemistry" />;
+        return <Flask className="w-5 h-5 md:w-6 md:h-6 text-chemistry" />;
       case 'biology':
-        return <Microscope className="w-6 h-6 text-biology" />;
+        return <Microscope className="w-5 h-5 md:w-6 md:h-6 text-biology" />;
       default:
         return null;
     }
@@ -172,21 +184,21 @@ const TestPage: React.FC = () => {
   
   if (isTestComplete) {
     return (
-      <div className="container mx-auto px-4 py-10 max-w-4xl">
+      <div className="container mx-auto px-4 py-6 md:py-10 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-8 rounded-xl shadow-lg"
+          className="bg-white p-6 md:p-8 rounded-xl shadow-lg"
         >
           <div className="text-center mb-8">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="font-heading text-3xl font-bold text-gray-900 mb-2">Test Terminé !</h2>
-            <p className="text-lg text-gray-600 mb-6">
+            <CheckCircle className="w-12 h-12 md:w-16 md:h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="font-heading text-2xl md:text-3xl font-bold text-gray-900 mb-2">Test Terminé !</h2>
+            <p className="text-base md:text-lg text-gray-600 mb-6">
               Vous avez terminé le test diagnostique dans toutes les matières.
             </p>
             
-            <div className="bg-gray-50 p-6 rounded-lg mb-8">
-              <h3 className="font-heading text-xl font-semibold mb-4">Résumé du Test</h3>
+            <div className="bg-gray-50 p-4 md:p-6 rounded-lg mb-8">
+              <h3 className="font-heading text-lg md:text-xl font-semibold mb-4">Résumé du Test</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {['math', 'physics', 'chemistry', 'biology'].map((subject) => {
                   const subjectQuestions = getSubjectQuestions(subject as SubjectType);
@@ -195,15 +207,15 @@ const TestPage: React.FC = () => {
                   return (
                     <div key={subject} className="text-center">
                       <div className="flex items-center justify-center mb-2">
-                        <div className={`w-10 h-10 rounded-full bg-${subject} flex items-center justify-center`}>
-                          {subject === 'math' && <Calculator className="w-5 h-5 text-white" />}
-                          {subject === 'physics' && <Atom className="w-5 h-5 text-white" />}
-                          {subject === 'chemistry' && <Flask className="w-5 h-5 text-white" />}
-                          {subject === 'biology' && <Microscope className="w-5 h-5 text-white" />}
+                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full bg-${subject} flex items-center justify-center`}>
+                          {subject === 'math' && <Calculator className="w-4 h-4 md:w-5 md:h-5 text-white" />}
+                          {subject === 'physics' && <Atom className="w-4 h-4 md:w-5 md:h-5 text-white" />}
+                          {subject === 'chemistry' && <Flask className="w-4 h-4 md:w-5 md:h-5 text-white" />}
+                          {subject === 'biology' && <Microscope className="w-4 h-4 md:w-5 md:h-5 text-white" />}
                         </div>
                       </div>
-                      <p className="font-semibold">{subjectInfo[subject as SubjectType].title}</p>
-                      <p className="text-sm text-gray-500">{answeredCount}/{subjectQuestions.length} répondues</p>
+                      <p className="font-semibold text-sm md:text-base">{subjectInfo[subject as SubjectType].title}</p>
+                      <p className="text-xs md:text-sm text-gray-500">{answeredCount}/{subjectQuestions.length} répondues</p>
                     </div>
                   );
                 })}
@@ -212,7 +224,7 @@ const TestPage: React.FC = () => {
             
             <button
               onClick={handleSubmitTest}
-              className="bg-primary-700 hover:bg-primary-800 text-white font-medium px-8 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
+              className="w-full md:w-auto bg-primary-700 hover:bg-primary-800 text-white font-medium px-8 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
             >
               Voir Mes Résultats
             </button>
@@ -261,45 +273,45 @@ const TestPage: React.FC = () => {
     <>
       {showConfirmation && <ConfirmationDialog />}
       
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
-        {/* Progress bar and timer */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <div className="flex items-center mb-4 md:mb-0">
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-5xl">
+        {/* Progress bar and timer - Mobile optimized */}
+        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
+          <div className="flex items-center">
             {getSubjectIcon()}
-            <span className="ml-2 font-medium text-lg">
+            <span className="ml-2 font-medium text-base md:text-lg">
               {subjectInfo[currentSubject].title}
             </span>
-            <span className="ml-2 text-gray-500">
-              Question {currentQuestionIndex + 1} sur {questions.length}
+            <span className="ml-2 text-gray-500 text-sm md:text-base">
+              {currentQuestionIndex + 1}/{questions.length}
             </span>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between md:justify-end space-x-4">
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Temps Restant</div>
-              <div className={`font-mono font-semibold text-lg ${timeLeft < 120 ? 'text-red-600' : 'text-gray-800'}`}>
+              <div className="text-xs md:text-sm text-gray-500 mb-1">Temps Restant</div>
+              <div className={`font-mono font-semibold text-base md:text-lg ${timeLeft < 120 ? 'text-red-600' : 'text-gray-800'}`}>
                 {formatTime(timeLeft)}
               </div>
             </div>
             
             <button
               onClick={() => setShowConfirmation(true)}
-              className="bg-primary-700 hover:bg-primary-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              className="bg-primary-700 hover:bg-primary-800 text-white text-xs md:text-sm font-medium px-3 md:px-4 py-2 rounded-lg transition-colors"
             >
-              Soumettre le Test
+              {isMobile ? 'Terminer' : 'Soumettre le Test'}
             </button>
           </div>
         </div>
         
         {/* Progress bar */}
-        <div className="w-full h-3 bg-gray-200 rounded-full mb-8">
+        <div className="w-full h-2 md:h-3 bg-gray-200 rounded-full mb-6 md:mb-8">
           <div
             className={`h-full ${getSubjectColorClass()} rounded-full transition-all duration-300`}
             style={{ width: `${getProgressPercentage()}%` }}
           ></div>
         </div>
         
-        {/* Question card */}
+        {/* Question card - Mobile optimized */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
@@ -307,80 +319,84 @@ const TestPage: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-6 border-l-4 border-current"
+            className="bg-white p-4 md:p-8 rounded-xl shadow-lg mb-4 md:mb-6 border-l-4 border-current"
             style={{ borderLeftColor: `var(--color-${currentSubject})` }}
           >
             <div className="mb-4">
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-${currentSubject} bg-opacity-10 text-${currentSubject} mb-2`}>
+              <span className={`inline-block px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium bg-${currentSubject} bg-opacity-10 text-${currentSubject} mb-2`}>
                 {currentQuestion.topic}
               </span>
             </div>
             
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <QuestionRenderer 
                 content={currentQuestion.question}
-                className="text-xl md:text-2xl font-heading font-semibold leading-relaxed"
+                className="text-lg md:text-2xl font-heading font-semibold leading-relaxed"
               />
             </div>
             
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
               {Object.entries(currentQuestion.options).map(([key, value]) => (
                 <div
                   key={key}
                   onClick={() => handleSelectAnswer(currentQuestion.id, key)}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                  className={`p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                     userAnswers[currentQuestion.id] === key
                       ? `bg-${currentSubject} bg-opacity-10 border-${currentSubject} shadow-md`
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex items-start">
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold ${
+                    <div className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 font-bold text-sm md:text-base ${
                       userAnswers[currentQuestion.id] === key
                         ? `bg-${currentSubject} text-white`
                         : 'bg-gray-100 text-gray-700'
                     }`}>
                       {formatOptionLetter(key)}
                     </div>
-                    <div className="pt-2 flex-1">
-                      <QuestionRenderer content={value} />
+                    <div className="pt-1 md:pt-2 flex-1">
+                      <QuestionRenderer content={value} className="text-sm md:text-base" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             
+            {/* Navigation buttons - Mobile optimized */}
             <div className="flex justify-between items-center">
               <button
                 onClick={handlePrevQuestion}
                 disabled={currentQuestionIndex === 0}
-                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all ${
+                className={`flex items-center px-3 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-all text-sm md:text-base ${
                   currentQuestionIndex === 0
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-gray-700 hover:bg-gray-100 hover:shadow-md'
                 }`}
               >
-                <ChevronLeft className="w-5 h-5 mr-2" />
-                Précédent
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+                {isMobile ? 'Préc.' : 'Précédent'}
               </button>
               
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-1">Difficulté</p>
-                <div className="flex space-x-1">
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <div
-                      key={level}
-                      className={`w-3 h-3 rounded-full ${
-                        level <= 5 ? `bg-${currentSubject}` : 'bg-gray-200'
-                      }`}
-                    />
-                  ))}
+              {/* Difficulty indicator - Hidden on mobile */}
+              {!isMobile && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-1">Difficulté</p>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`w-3 h-3 rounded-full ${
+                          level <= 5 ? `bg-${currentSubject}` : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               
               <button
                 onClick={handleNextQuestion}
-                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg ${
+                className={`flex items-center px-3 md:px-6 py-2 md:py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm md:text-base ${
                   isCurrentQuestionAnswered()
                     ? `bg-${currentSubject} text-white hover:opacity-90`
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -388,13 +404,13 @@ const TestPage: React.FC = () => {
               >
                 {currentQuestionIndex < questions.length - 1 ? (
                   <>
-                    Suivant
-                    <ChevronRight className="w-5 h-5 ml-2" />
+                    {isMobile ? 'Suiv.' : 'Suivant'}
+                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
                   </>
                 ) : (
                   <>
-                    Matière Suivante
-                    <ChevronRight className="w-5 h-5 ml-2" />
+                    {isMobile ? 'Matière Suiv.' : 'Matière Suivante'}
+                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5 ml-1 md:ml-2" />
                   </>
                 )}
               </button>
@@ -402,15 +418,15 @@ const TestPage: React.FC = () => {
           </motion.div>
         </AnimatePresence>
         
-        {/* Question navigation */}
-        <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="font-medium text-lg mb-4">Navigation des Questions</h3>
-          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2">
+        {/* Question navigation - Mobile optimized */}
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-md">
+          <h3 className="font-medium text-base md:text-lg mb-3 md:mb-4">Navigation des Questions</h3>
+          <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-2">
             {questions.map((q, index) => (
               <button
                 key={q.id}
                 onClick={() => setCurrentQuestionIndex(index)}
-                className={`w-full h-12 rounded-md flex items-center justify-center font-medium transition-all ${
+                className={`w-full h-10 md:h-12 rounded-md flex items-center justify-center font-medium transition-all text-sm md:text-base ${
                   index === currentQuestionIndex
                     ? `bg-${currentSubject} text-white shadow-md`
                     : userAnswers[q.id]
@@ -423,17 +439,17 @@ const TestPage: React.FC = () => {
             ))}
           </div>
           
-          <div className="mt-4 flex items-center justify-center space-x-6 text-sm">
+          <div className="mt-4 flex items-center justify-center space-x-4 md:space-x-6 text-xs md:text-sm">
             <div className="flex items-center space-x-2">
-              <div className={`w-4 h-4 rounded bg-${currentSubject}`}></div>
-              <span>Question actuelle</span>
+              <div className={`w-3 h-3 md:w-4 md:h-4 rounded bg-${currentSubject}`}></div>
+              <span>Actuelle</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className={`w-4 h-4 rounded bg-${currentSubject} bg-opacity-20 border-2 border-${currentSubject} border-opacity-30`}></div>
+              <div className={`w-3 h-3 md:w-4 md:h-4 rounded bg-${currentSubject} bg-opacity-20 border-2 border-${currentSubject} border-opacity-30`}></div>
               <span>Répondue</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 rounded bg-gray-100"></div>
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded bg-gray-100"></div>
               <span>Non répondue</span>
             </div>
           </div>
