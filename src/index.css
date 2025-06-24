@@ -1,9 +1,8 @@
+/* Import KaTeX CSS */
+@import 'katex/dist/katex.min.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import KaTeX CSS */
-@import 'katex/dist/katex.min.css';
 
 /* Custom styles for math rendering */
 .katex {

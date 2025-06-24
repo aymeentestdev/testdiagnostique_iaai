@@ -142,275 +142,214 @@ const ResultsPage: React.FC = () => {
     maintainAspectRatio: false,
   };
   
-  // Generate and download PDF with updated logic
+  // Generate and download PDF with NEW minimalist academic design
   const handleDownloadPDF = async () => {
     setIsLoading(true);
-    
     try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.width;
-      const pageHeight = doc.internal.pageSize.height;
-      
-      // Colors for academic design
-      const primaryBlue = [30, 58, 138];
-      const lightBlue = [219, 234, 254];
-      const darkGray = [55, 65, 81];
-      const lightGray = [243, 244, 246];
-      
-      // Header with academic design
-      doc.setFillColor(...primaryBlue);
-      doc.rect(0, 0, pageWidth, 35, 'F');
-      
-      // IAAI Logo area
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // ------- Style tokens -------
+      const primary = [33, 37, 41];      // Dark gray
+      const accent = [25, 118, 210];     // Academic blue
+      const light = [245, 245, 245];     // Light gray background for tables
+
+      const lineGap = 18; // default line gap
+      let y = 60; // cursor Y
+
+      // ------- Header -------
+      // Colored banner background
+      const bannerHeight = 100;
+      doc.setFillColor(...accent);
+      doc.rect(0, 0, pageWidth, bannerHeight, 'F');
+
+      // Institute name (white)
+      doc.setFont('times', 'bold');
+      doc.setFontSize(24);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Institut IAAI', 40, 45);
+
+      // Subtitle
+      doc.setFontSize(12);
+      doc.text('Rapport de Diagnostic Académique', 40, 60);
+
+      // Overall percentage badge on banner right
+      const pct = results.overall.percentage.toFixed(1);
+      const badgeRadius = 25;
+      const badgeX = pageWidth - 60;
+      const badgeY = bannerHeight / 2 + 5;
       doc.setFillColor(255, 255, 255);
-      doc.rect(15, 8, 25, 19, 'F');
-      doc.setTextColor(...primaryBlue);
-      doc.setFont('helvetica', 'bold');
+      doc.circle(badgeX, badgeY, badgeRadius, 'F');
+      doc.setFillColor(...accent);
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(2);
+      doc.circle(badgeX, badgeY, badgeRadius, 'S');
+      doc.setFont('times', 'bold');
       doc.setFontSize(14);
-      doc.text('IAAI', 27.5, 20, { align: 'center' });
-      
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text('RAPPORT DE DIAGNOSTIC ACADÉMIQUE', pageWidth/2, 18, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text('Test d\'Évaluation des Compétences Post-Baccalauréat', pageWidth/2, 26, { align: 'center' });
-      
-      // Student information section
-      doc.setFillColor(...lightBlue);
-      doc.rect(15, 45, pageWidth - 30, 25, 'F');
-      doc.setDrawColor(...primaryBlue);
-      doc.rect(15, 45, pageWidth - 30, 25, 'S');
-      
-      doc.setTextColor(...darkGray);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('INFORMATIONS DE L\'ÉTUDIANT', 20, 55);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Nom de l'étudiant : ${userName}`, 20, 62);
-      doc.text(`Date d'évaluation : ${new Date().toLocaleDateString('fr-FR', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })}`, 20, 67);
-      
-      // Overall performance section
-      let currentY = 85;
-      doc.setFillColor(...primaryBlue);
-      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('PERFORMANCE GLOBALE', 20, currentY + 5);
-      
-      currentY += 15;
-      doc.setTextColor(...darkGray);
-      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...accent);
+      doc.text(`${pct}%`, badgeX, badgeY + 5, { align: 'center' });
+
+      // reset text color to primary for body
+      doc.setTextColor(...primary);
+
+      // Move cursor below banner
+      y = bannerHeight + 30;
+
+      // (Removed global thin divider to prevent double lines; dividers are now drawn per section)
+
+      // ------- Étudiant -------
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      doc.text("Informations de l'étudiant", 40, y);
+      y += 6;
+      // divider just under title
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(1);
+      doc.line(40, y, pageWidth - 40, y);
+      y += lineGap; // move to content start
+
+      doc.setFont('times', 'normal');
       doc.setFontSize(11);
-      
-      // Performance metrics in a structured layout
-      const performanceData = [
-        ['Total des Questions', results.overall.total.toString()],
-        ['Réponses Correctes', results.overall.correct.toString()],
-        ['Score Global', `${results.overall.percentage.toFixed(1)}%`],
-        ['Temps Total de Préparation', `${results.totalStudyHours} heures`],
-        ['Niveau de Performance', results.overall.percentage >= 80 ? 'Excellent' : 
-                                 results.overall.percentage >= 65 ? 'Bien' : 
-                                 results.overall.percentage >= 50 ? 'Moyen' : 'À Améliorer']
-      ];
-      
+      doc.text(`Nom : ${userName}`, 40, y);
+      y += lineGap;
+      doc.text(
+        `Date : ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+        40,
+        y
+      );
+      y += lineGap * 1.5;
+
+      // ------- Performance globale -------
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      doc.text('Performance Globale', 40, y);
+      y += 6;
+      // divider just under title
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(1);
+      doc.line(40, y, pageWidth - 40, y);
+      y += lineGap; // move to content start
+
       (doc as any).autoTable({
-        startY: currentY,
-        body: performanceData,
+        startY: y,
+        body: [
+          ['Total Questions', results.overall.total],
+          ['Réponses Correctes', results.overall.correct],
+          ['Score (%)', `${results.overall.percentage.toFixed(1)} %`],
+          ['Temps Préparation', `${results.totalStudyHours} h`],
+        ],
         theme: 'plain',
-        styles: {
-          fontSize: 10,
-          cellPadding: 3,
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 70 },
-          1: { cellWidth: 40, halign: 'center' },
-        },
-        margin: { left: 20, right: 20 },
+        styles: { font: 'times', fontSize: 10, textColor: primary },
+        columnStyles: { 0: { fontStyle: 'bold' } },
+        margin: { left: 40, right: 40 },
       });
-      
-      // Subject performance table
-      currentY = (doc as any).lastAutoTable.finalY + 20;
-      
-      doc.setFillColor(...primaryBlue);
-      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('ANALYSE DÉTAILLÉE PAR MATIÈRE', 20, currentY + 5);
-      
-      currentY += 15;
-      
+      y = (doc as any).lastAutoTable.finalY + lineGap * 1.5;
+
+      // ------- Analyse par matière -------
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      doc.text('Analyse par Matière', 40, y);
+      y += 6;
+      // divider just under title
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(1);
+      doc.line(40, y, pageWidth - 40, y);
+      y += lineGap; // move to content start
+
       const subjectTableData = Object.entries(results.subjects).map(([subject, data]) => [
         subjectInfo[subject as SubjectType].title,
         `${data.correct}/${data.total}`,
-        `${data.percentage.toFixed(1)}%`,
-        `${data.allocatedHours}h`,
-        data.weakTopics.length > 0 ? data.weakTopics.slice(0, 2).join(', ') + (data.weakTopics.length > 2 ? '...' : '') : 'Aucune'
+        `${data.percentage.toFixed(1)} %`,
+        `${data.allocatedHours} h`,
       ]);
-      
+
       (doc as any).autoTable({
-        startY: currentY,
-        head: [['Matière', 'Score', 'Pourcentage', 'Temps Alloué', 'Domaines à Améliorer']],
+        startY: y,
+        head: [['Matière', 'Score', '%', 'Heures allouées']],
         body: subjectTableData,
-        theme: 'striped',
-        headStyles: {
-          fillColor: primaryBlue,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
+        headStyles: { fillColor: accent, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+        styles: {
+          fillColor: light,
+          textColor: primary,
+          font: 'times',
           fontSize: 10,
         },
-        styles: {
-          fontSize: 9,
-          cellPadding: 4,
-        },
-        columnStyles: {
-          0: { cellWidth: 35, fontStyle: 'bold' },
-          1: { cellWidth: 20, halign: 'center' },
-          2: { cellWidth: 25, halign: 'center' },
-          3: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
-          4: { cellWidth: 80 },
-        },
-        margin: { left: 20, right: 20 },
+        alternateRowStyles: { fillColor: [255, 255, 255] },
+        margin: { left: 40, right: 40 },
       });
-      
-      // Study plans section
-      currentY = (doc as any).lastAutoTable.finalY + 20;
-      
-      if (currentY > pageHeight - 50) {
-        doc.addPage();
-        currentY = 20;
-      }
-      
-      doc.setFillColor(...primaryBlue);
-      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('PLANS DE PRÉPARATION PERSONNALISÉS', 20, currentY + 5);
-      
-      currentY += 20;
-      
+      y = (doc as any).lastAutoTable.finalY + lineGap * 1.5;
+
+      // ------- Plans de Préparation -------
+      doc.setFontSize(14);
+      doc.setFont('times', 'bold');
+      doc.text('Plans de Préparation', 40, y);
+      y += 6;
+      // divider just under title
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(1);
+      doc.line(40, y, pageWidth - 40, y);
+      y += lineGap; // move to content start
+
       Object.entries(results.subjects).forEach(([subject, data]) => {
-        if (currentY > pageHeight - 60) {
+        doc.setFont('times', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(...accent);
+        doc.text(`${subjectInfo[subject as SubjectType].title} – ${data.allocatedHours} h`, 40, y);
+        y += lineGap;
+
+        doc.setFont('times', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...primary);
+        const wrapped = doc.splitTextToSize(data.studyPlan.map((i, idx) => `${idx + 1}. ${i}`).join('\n'), pageWidth - 80);
+        doc.text(wrapped, 60, y);
+        y += wrapped.length * 12 + lineGap;
+
+        if (y > pageHeight - 120) {
           doc.addPage();
-          currentY = 20;
+          y = 60;
         }
-        
-        // Subject header
-        doc.setFillColor(...lightGray);
-        doc.rect(15, currentY, pageWidth - 30, 12, 'F');
-        doc.setDrawColor(...primaryBlue);
-        doc.rect(15, currentY, pageWidth - 30, 12, 'S');
-        
-        doc.setTextColor(...primaryBlue);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text(`${subjectInfo[subject as SubjectType].title} - ${data.allocatedHours} heures allouées`, 20, currentY + 7);
-        
-        currentY += 18;
-        
-        // Study plan items
-        doc.setTextColor(...darkGray);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        
-        data.studyPlan.forEach((item, index) => {
-          if (currentY > pageHeight - 20) {
-            doc.addPage();
-            currentY = 20;
-          }
-          
-          const wrappedText = doc.splitTextToSize(`${index + 1}. ${item}`, pageWidth - 50);
-          doc.text(wrappedText, 25, currentY);
-          currentY += wrappedText.length * 4 + 2;
-        });
-        
-        currentY += 8;
       });
-      
-      // Recommendations section
-      if (currentY > pageHeight - 80) {
-        doc.addPage();
-        currentY = 20;
-      }
-      
-      doc.setFillColor(...primaryBlue);
-      doc.rect(15, currentY, pageWidth - 30, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('RECOMMANDATIONS PÉDAGOGIQUES', 20, currentY + 5);
-      
-      currentY += 20;
-      
-      doc.setTextColor(...darkGray);
-      doc.setFont('helvetica', 'normal');
+
+      // ------- Recommandations -------
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      doc.text('Recommandations', 40, y);
+      y += 6;
+      // divider just under title
+      doc.setDrawColor(...accent);
+      doc.setLineWidth(1);
+      doc.line(40, y, pageWidth - 40, y);
+      y += lineGap; // move to content start
+
+      doc.setFont('times', 'normal');
       doc.setFontSize(10);
-      
-      results.recommendations.forEach((recommendation, index) => {
-        if (currentY > pageHeight - 30) {
-          doc.addPage();
-          currentY = 20;
-        }
-        
-        const wrappedText = doc.splitTextToSize(`• ${recommendation}`, pageWidth - 40);
-        doc.text(wrappedText, 20, currentY);
-        currentY += wrappedText.length * 5 + 3;
-      });
-      
-      // Footer on all pages
+      const recText = results.recommendations.map(r => `• ${r}`).join('\n\n');
+      doc.text(doc.splitTextToSize(recText, pageWidth - 80), 40, y);
+
+      // ------- Footer (every page) -------
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        
-        // Footer line
-        doc.setDrawColor(...primaryBlue);
-        doc.line(15, pageHeight - 20, pageWidth - 15, pageHeight - 20);
-        
-        // Footer text
+        // footer accent line
+        doc.setDrawColor(...accent);
+        doc.setLineWidth(0.5);
+        doc.line(40, pageHeight - 50, pageWidth - 40, pageHeight - 50);
+
+        // footer texts
+        doc.setFont('times', 'italic');
         doc.setFontSize(8);
-        doc.setTextColor(...darkGray);
-        doc.text(
-          'Institut IAAI - Centre d\'Excellence Académique',
-          20,
-          pageHeight - 12
-        );
-        doc.text(
-          `Page ${i} sur ${pageCount}`,
-          pageWidth - 20,
-          pageHeight - 12,
-          { align: 'right' }
-        );
-        
-        // Date in footer
-        doc.text(
-          `Généré le ${new Date().toLocaleDateString('fr-FR')}`,
-          pageWidth/2,
-          pageHeight - 12,
-          { align: 'center' }
-        );
+        doc.setTextColor(...primary);
+        doc.text('Institut IAAI – Centre d\'Excellence Académique', pageWidth / 2, pageHeight - 38, { align: 'center' });
+        doc.text(`Page ${i}/${pageCount}`, pageWidth - 40, pageHeight - 38, { align: 'right' });
+        doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 40, pageHeight - 38);
       }
-      
-      // Save the PDF
-      doc.save(`IAAI_Diagnostic_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      doc.save(`IAAI_Diagnostic_${userName.replace(/\s/g, '_')}.pdf`);
       setShowDownloadMessage(true);
-      
-      // Hide the message after 3 seconds
-      setTimeout(() => {
-        setShowDownloadMessage(false);
-      }, 3000);
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF', error);
+      setTimeout(() => setShowDownloadMessage(false), 3000);
+    } catch (err) {
+      console.error('PDF error:', err);
     } finally {
       setIsLoading(false);
     }
